@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Absensi Siswa - SMP Negeri 5 Banda Aceh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            .mobile-table {
+                font-size: 12px;
+            }
+            .mobile-card {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body class="h-full bg-gradient-to-br from-blue-50 to-indigo-100 font-sans">
+    <div class="min-h-full p-2 sm:p-4">
+        <header class="text-center mb-4 sm:mb-8">
+            <div class="mb-3 sm:mb-4">
+                <h1 class="text-lg sm:text-2xl font-bold text-gray-700 mb-1 px-2">SMP NEGERI 5 BANDA ACEH</h1>
+                <div class="w-16 sm:w-24 h-1 bg-indigo-600 mx-auto rounded-full"></div>
+            </div>
+            <h2 class="text-xl sm:text-4xl font-bold text-indigo-800 mb-2 sm:mb-3 leading-tight px-2">⏰ Pencatatan Keterlambatan Siswa</h2>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+                <div id="datetime" class="text-xs sm:text-lg text-gray-600 bg-white px-2 sm:px-4 py-2 rounded-lg shadow-sm text-center leading-tight"></div>
+                <div id="connectionStatus" class="flex items-center px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-medium">
+                    <div id="statusIndicator" class="w-2 h-2 sm:w-3 sm:h-3 rounded-full mr-2"></div>
+                    <span id="statusText">Memeriksa koneksi...</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-4xl mx-auto">
+            <!-- Form Absensi -->
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-8">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">✏️ Input Keterlambatan</h2>
+                
+                <form id="absensiForm" class="space-y-4 sm:space-y-6">
+                    <!-- Filter Kelas -->
+                    <div>
+                        <label for="kelas" class="block text-sm font-medium text-gray-700 mb-2">Pilih Kelas:</label>
+                        <select id="kelas" name="kelas" required class="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-base">
+                            <option value="">-- Pilih Kelas --</option>
+                            <option value="7-1">Kelas 7-1</option>
+                            <option value="7-2">Kelas 7-2</option>
+                            <option value="7-3">Kelas 7-3</option>
+                            <option value="8-1">Kelas 8-1</option>
+                            <option value="8-2">Kelas 8-2</option>
+                            <option value="8-3">Kelas 8-3</option>
+                            <option value="8-4">Kelas 8-4</option>
+                            <option value="9-1">Kelas 9-1</option>
+                            <option value="9-2">Kelas 9-2</option>
+                        </select>
+                    </div>
+
+                    <!-- Nama Siswa -->
+                    <div>
+                        <label for="namaSiswa" class="block text-sm font-medium text-gray-700 mb-2">Nama Siswa:</label>
+                        <select id="namaSiswa" name="namaSiswa" required disabled class="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-100 text-base">
+                            <option value="">-- Pilih kelas terlebih dahulu --</option>
+                        </select>
+                    </div>
+
+                    <!-- Alasan Keterlambatan -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Alasan Keterlambatan:</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="flex items-center p-3 border border-orange-200 rounded-lg hover:bg-orange-50 cursor-pointer transition-colors">
+                                <input type="radio" name="status" value="Macet" required class="w-4 h-4 text-orange-600 focus:ring-orange-500 flex-shrink-0">
+                                <span class="ml-3 text-orange-700 font-medium text-sm sm:text-base">🚗 Macet</span>
+                            </label>
+                            <label class="flex items-center p-3 border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer transition-colors">
+                                <input type="radio" name="status" value="Kesiangan" required class="w-4 h-4 text-red-600 focus:ring-red-500 flex-shrink-0">
+                                <span class="ml-3 text-red-700 font-medium text-sm sm:text-base">😴 Kesiangan</span>
+                            </label>
+                            <label class="flex items-center p-3 border border-yellow-200 rounded-lg hover:bg-yellow-50 cursor-pointer transition-colors">
+                                <input type="radio" name="status" value="Kendaraan Rusak" required class="w-4 h-4 text-yellow-600 focus:ring-yellow-500 flex-shrink-0">
+                                <span class="ml-3 text-yellow-700 font-medium text-sm sm:text-base">🔧 Kendaraan Rusak</span>
+                            </label>
+                            <label class="flex items-center p-3 border border-blue-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors">
+                                <input type="radio" name="status" value="Keperluan Keluarga" required class="w-4 h-4 text-blue-600 focus:ring-blue-500 flex-shrink-0">
+                                <span class="ml-3 text-blue-700 font-medium text-sm sm:text-base">👨‍👩‍👧‍👦 Keperluan Keluarga</span>
+                            </label>
+                            <label class="flex items-center p-3 border border-purple-200 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors sm:col-span-2">
+                                <input type="radio" name="status" value="Lainnya" required class="w-4 h-4 text-purple-600 focus:ring-purple-500 flex-shrink-0">
+                                <span class="ml-3 text-purple-700 font-medium text-sm sm:text-base">📝 Lainnya</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Keterangan -->
+                    <div>
+                        <label for="keterangan" class="block text-sm font-medium text-gray-700 mb-2">Detail Keterangan:</label>
+                        <textarea id="keterangan" name="keterangan" rows="3" class="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base" placeholder="Jelaskan detail alasan keterlambatan..."></textarea>
+                    </div>
+
+                    <!-- Tombol Submit -->
+                    <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-lg transition duration-200 flex items-center justify-center text-base">
+                        <span id="submitText">💾 Catat Keterlambatan</span>
+                        <div id="submitLoading" class="loading ml-2 hidden"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Rekap Harian -->
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-8">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">📊 Rekap Keterlambatan Hari Ini</h2>
+                <div id="rekapContainer">
+                    <div class="text-center text-gray-500 py-8">
+                        <div class="loading mx-auto mb-4"></div>
+                        <p>Memuat data keterlambatan...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Setup Online GitHub -->
+            <div id="onlineSetupCard" class="bg-gradient-to-r from-gray-900 to-gray-800 border border-gray-700 rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-8 text-white">
+                <h2 class="text-xl sm:text-2xl font-semibold text-white mb-4 sm:mb-6">🚀 Setup GitHub Database (GRATIS!)</h2>
+                
+                <div class="bg-white/10 backdrop-blur rounded-lg p-4 mb-4">
+                    <h3 class="font-semibold text-green-400 mb-3">⭐ Kenapa GitHub Terbaik untuk Sekolah?</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div class="space-y-2">
+                            <p>✅ <strong>100% GRATIS</strong> - Unlimited repositories</p>
+                            <p>✅ <strong>MUDAH SETUP</strong> - Hanya 5 menit</p>
+                            <p>✅ <strong>BACKUP OTOMATIS</strong> - Git version control</p>
+                            <p>✅ <strong>HOSTING GRATIS</strong> - GitHub Pages</p>
+                        </div>
+                        <div class="space-y-2">
+                            <p>✅ <strong>NO LIMIT DATA</strong> - Unlimited storage</p>
+                            <p>✅ <strong>AKSES GLOBAL</strong> - Dari mana saja</p>
+                            <p>✅ <strong>AMAN & TERPERCAYA</strong> - Microsoft owned</p>
+                            <p>✅ <strong>MULTI DEVICE</strong> - Sync semua perangkat</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg p-4 mb-4 text-gray-800">
+                    <h3 class="font-semibold text-gray-800 mb-3">📋 Langkah Setup GitHub (5 Menit!):</h3>
+                    <div class="text-sm space-y-2">
+                        <p><strong>Step 1:</strong> Buat repository baru di <a href="https://github.com/new" target="_blank" class="text-blue-600 underline font-medium">GitHub.com</a></p>
+                        <p><strong>Step 2:</strong> Buat Personal Access Token di <a href="https://github.com/settings/tokens" target="_blank" class="text-blue-600 underline font-medium">Settings > Developer > Tokens</a></p>
+                        <p><strong>Step 3:</strong> Pilih scope: <code class="bg-gray-100 px-1 rounded">repo</code> dan <code class="bg-gray-100 px-1 rounded">contents</code></p>
+                        <p><strong>Step 4:</strong> Copy token dan ganti config di kode (baris 325-330)</p>
+                        <p><strong>Step 5:</strong> Aktifkan GitHub Pages di repository settings</p>
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3 mb-4">
+                    <h4 class="font-semibold text-yellow-300 mb-2">⚡ Config GitHub di Kode:</h4>
+                    <div class="text-xs font-mono bg-black/30 p-2 rounded text-green-300">
+                        const GITHUB_CONFIG = {<br>
+                        &nbsp;&nbsp;username: 'your-github-username',<br>
+                        &nbsp;&nbsp;repository: 'smpn5-absensi',<br>
+                        &nbsp;&nbsp;token: 'ghp_your-token-here',<br>
+                        &nbsp;&nbsp;branch: 'main'<br>
+                        };
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="hideSetupCard()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+                        ✅ Sudah Setup - Sembunyikan
+                    </button>
+                    <a href="https://github.com/new" target="_blank" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 text-center">
+                        🆕 Buat Repository
+                    </a>
+                    <a href="https://github.com/settings/tokens" target="_blank" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 text-center">
+                        🔑 Buat Token
+                    </a>
+                    <button onclick="testGitHubConnection()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+                        🧪 Test Koneksi
+                    </button>
+                </div>
+            </div>
+
+            <!-- Input Data Siswa -->
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-8">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">👥 Input Data Siswa</h2>
+                
+                <!-- Tab Navigation -->
+                <div class="flex mb-6 border-b border-gray-200">
+                    <button onclick="switchTab('manual')" id="manualTab" class="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600 bg-blue-50 rounded-t-lg">
+                        ✏️ Input Manual
+                    </button>
+                    <button onclick="switchTab('upload')" id="uploadTab" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 ml-2">
+                        📂 Upload File
+                    </button>
+                </div>
+
+                <!-- Manual Input Tab -->
+                <div id="manualInputTab" class="block">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                        <h3 class="font-semibold text-green-800 mb-2">✏️ Input Manual - Lebih Mudah!</h3>
+                        <div class="text-sm text-green-700 space-y-1">
+                            <p>• <strong>Input Satu-satu:</strong> Ketik nama satu per satu</p>
+                            <p>• <strong>Input Banyak:</strong> Copy-paste semua nama sekaligus!</p>
+                            <p>• Tidak perlu file Excel - langsung tersimpan</p>
+                        </div>
+                    </div>
+
+                    <!-- Tab untuk Input Mode -->
+                    <div class="flex mb-4 bg-gray-100 rounded-lg p-1">
+                        <button onclick="switchInputMode('single')" id="singleModeBtn" class="flex-1 px-4 py-2 text-sm font-medium bg-white text-green-600 rounded-md shadow-sm">
+                            👤 Input Satu-satu
+                        </button>
+                        <button onclick="switchInputMode('bulk')" id="bulkModeBtn" class="flex-1 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
+                            📝 Input Banyak Sekaligus
+                        </button>
+                    </div>
+
+                    <!-- Single Input Mode -->
+                    <div id="singleInputMode" class="block">
+                        <form id="manualStudentForm" class="space-y-4">
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <div class="flex-1">
+                                    <label for="manualKelas" class="block text-sm font-medium text-gray-700 mb-2">Pilih Kelas:</label>
+                                    <select id="manualKelas" required class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-base">
+                                        <option value="">-- Pilih Kelas --</option>
+                                        <option value="7-1">Kelas 7-1</option>
+                                        <option value="7-2">Kelas 7-2</option>
+                                        <option value="7-3">Kelas 7-3</option>
+                                        <option value="8-1">Kelas 8-1</option>
+                                        <option value="8-2">Kelas 8-2</option>
+                                        <option value="8-3">Kelas 8-3</option>
+                                        <option value="8-4">Kelas 8-4</option>
+                                        <option value="9-1">Kelas 9-1</option>
+                                        <option value="9-2">Kelas 9-2</option>
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label for="manualNama" class="block text-sm font-medium text-gray-700 mb-2">Nama Siswa:</label>
+                                    <input type="text" id="manualNama" required placeholder="Contoh: Ahmad Rizki Maulana" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base">
+                                </div>
+                                <div class="flex flex-col justify-end">
+                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center text-base">
+                                        ➕ Tambah Siswa
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bulk Input Mode -->
+                    <div id="bulkInputMode" class="hidden">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <h4 class="font-semibold text-blue-800 mb-2">📝 Cara Input Banyak Sekaligus:</h4>
+                            <div class="text-sm text-blue-700 space-y-1">
+                                <p>• Ketik satu nama per baris</p>
+                                <p>• Pilih kelas, lalu paste semua nama sekaligus</p>
+                                <p>• Contoh: copy dari Excel atau Word</p>
+                            </div>
+                        </div>
+                        
+                        <form id="bulkStudentForm" class="space-y-4">
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <div class="flex-1">
+                                    <label for="bulkKelas" class="block text-sm font-medium text-gray-700 mb-2">Pilih Kelas:</label>
+                                    <select id="bulkKelas" required class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-base">
+                                        <option value="">-- Pilih Kelas --</option>
+                                        <option value="7-1">Kelas 7-1</option>
+                                        <option value="7-2">Kelas 7-2</option>
+                                        <option value="7-3">Kelas 7-3</option>
+                                        <option value="8-1">Kelas 8-1</option>
+                                        <option value="8-2">Kelas 8-2</option>
+                                        <option value="8-3">Kelas 8-3</option>
+                                        <option value="8-4">Kelas 8-4</option>
+                                        <option value="9-1">Kelas 9-1</option>
+                                        <option value="9-2">Kelas 9-2</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="bulkNama" class="block text-sm font-medium text-gray-700 mb-2">Daftar Nama Siswa (satu nama per baris):</label>
+                                <textarea id="bulkNama" required rows="10" placeholder="Ahmad Rizki Maulana
+Siti Nurhaliza Putri
+Budi Santoso
+Cut Nyak Dien
+Dinda Permata Sari
+..." class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base font-mono"></textarea>
+                                <div class="text-sm text-gray-600 mt-1">
+                                    <span id="nameCount">0</span> nama terdeteksi
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center text-base">
+                                <span id="bulkSubmitText">📝 Tambah Semua Siswa</span>
+                                <div id="bulkSubmitLoading" class="loading ml-2 hidden"></div>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Daftar Siswa per Kelas -->
+                    <div id="studentListContainer" class="mt-6">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Upload File Tab -->
+                <div id="uploadFileTab" class="hidden">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <h3 class="font-semibold text-blue-800 mb-2">📋 Format File Excel yang Diperlukan:</h3>
+                        <div class="text-sm text-blue-700 space-y-1">
+                            <p>• <strong>Kolom A:</strong> Kelas (contoh: 7-1, 7-2, 8-1, dst)</p>
+                            <p>• <strong>Kolom B:</strong> Nama Siswa (contoh: Ahmad Rizki Maulana)</p>
+                            <p>• <strong>File format:</strong> .csv atau .xlsx</p>
+                            <p>• <strong>Tanpa header</strong> - langsung data mulai baris 1</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1">
+                            <label for="fileImport" class="block text-sm font-medium text-gray-700 mb-2">Pilih File Excel:</label>
+                            <input type="file" id="fileImport" accept=".csv,.xlsx,.xls" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-base">
+                        </div>
+                        <div class="flex flex-col justify-end">
+                            <button onclick="importStudentData()" id="importBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center text-base">
+                                <span id="importText">📥 Import Data</span>
+                                <div id="importLoading" class="loading ml-2 hidden"></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button onclick="downloadTemplate()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm">
+                            📄 Download Template Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="mt-8 sm:mt-12 text-center">
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 max-w-sm sm:max-w-md mx-auto">
+                <div class="flex items-center justify-center mb-4">
+                    <!-- Logo Upload Area -->
+                    <div class="relative mr-3">
+                        <img id="schoolLogo" class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover border-2 border-gray-300 hidden" alt="Logo Sekolah">
+                        <div id="logoPlaceholder" class="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-100 border-2 border-dashed border-indigo-300 rounded-lg flex items-center justify-center cursor-pointer hover:bg-indigo-200 transition-colors">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                        </div>
+                        <input type="file" id="logoUpload" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    </div>
+                    <div class="text-left">
+                        <h3 class="text-base sm:text-lg font-bold text-gray-800">SMP NEGERI 5</h3>
+                        <p class="text-xs sm:text-sm text-gray-600">BANDA ACEH</p>
+                    </div>
+                </div>
+                <div class="border-t pt-4">
+                    <p class="text-xs sm:text-sm text-gray-600 mb-1">Dikembangkan oleh:</p>
+                    <p class="text-base sm:text-lg font-semibold text-indigo-700">Arisalwin, S.Pd.</p>
+                    <p class="text-xs text-gray-500 mt-2">© 2024 - Sistem Pencatatan Keterlambatan Siswa</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // ========================================
+        // KONFIGURASI GITHUB DATABASE
+        // ========================================
+        
+        // 🚀 GANTI CONFIG INI DENGAN DATA GITHUB ANDA!
+        const GITHUB_CONFIG = {
+            username: 'your-github-username',        // Ganti dengan username GitHub Anda
+            repository: 'smpn5-absensi',            // Nama repository (buat baru di GitHub)
+            token: 'ghp_your-personal-access-token', // Personal Access Token GitHub
+            branch: 'main',                         // Branch utama (biasanya 'main' atau 'master')
+            apiUrl: 'https://api.github.com'        // GitHub API URL
+        };
+
+        // Konfigurasi Firebase (Backup - Opsional)
+        const firebaseConfig = {
+            apiKey: "your-api-key-here",
+            authDomain: "smpn5-absensi.firebaseapp.com",
+            databaseURL: "https://smpn5-absensi-default-rtdb.firebaseio.com",
+            projectId: "smpn5-absensi",
+            storageBucket: "smpn5-absensi.appStorage.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id-here"
+        };
+
+        // Data lokal (backup/cache)
+        let dataSiswa = {
+            '7-1': [], '7-2': [], '7-3': [],
+            '8-1': [], '8-2': [], '8-3': [], '8-4': [],
+            '9-1': [], '9-2': []
+        };
+        let dataAbsensi = [];
+        
+        // Status koneksi
+        let isOnline = navigator.onLine;
+        let syncInProgress = false;
+        let githubConnected = false;
+
+        // Update jam dan tanggal
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZone: 'Asia/Jakarta'
+            };
+            
+            // Format berbeda untuk mobile dan desktop
+            const isMobile = window.innerWidth < 640;
+            if (isMobile) {
+                const mobileOptions = {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Asia/Jakarta'
+                };
+                document.getElementById('datetime').textContent = now.toLocaleDateString('id-ID', mobileOptions);
+            } else {
+                document.getElementById('datetime').textContent = now.toLocaleDateString('id-ID', options);
+            }
+        }
+
+        // Update setiap detik
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Update saat resize window
+        window.addEventListener('resize', updateDateTime);
+
+        // ========================================
+        // FUNGSI GITHUB API INTEGRATION
+        // ========================================
+        
+        // Test koneksi GitHub
+        async function testGitHubConnection() {
+            const statusText = document.getElementById('statusText');
+            const originalText = statusText.textContent;
+            
+            statusText.textContent = '🧪 Testing GitHub...';
+            
+            try {
+                const response = await fetch(`${GITHUB_CONFIG.apiUrl}/user`, {
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    githubConnected = true;
+                    showNotification(`✅ GitHub terhubung! Halo ${userData.login}`, 'success');
+                    statusText.textContent = '🌐 GitHub Connected';
+                } else {
+                    throw new Error(`GitHub API Error: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('GitHub connection test failed:', error);
+                showNotification('❌ Koneksi GitHub gagal! Periksa token dan config.', 'error');
+                statusText.textContent = originalText;
+            }
+        }
+
+        // Simpan data ke GitHub
+        async function saveToGitHub(filename, data, message) {
+            if (!githubConnected && !await checkGitHubConnection()) {
+                throw new Error('GitHub not connected');
+            }
+            
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+            
+            // Cek apakah file sudah ada
+            let sha = null;
+            try {
+                const existingFile = await fetch(`${GITHUB_CONFIG.apiUrl}/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repository}/contents/${filename}`, {
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (existingFile.ok) {
+                    const fileData = await existingFile.json();
+                    sha = fileData.sha;
+                }
+            } catch (error) {
+                // File belum ada, tidak masalah
+            }
+            
+            // Upload/update file
+            const payload = {
+                message: message,
+                content: content,
+                branch: GITHUB_CONFIG.branch
+            };
+            
+            if (sha) {
+                payload.sha = sha;
+            }
+            
+            const response = await fetch(`${GITHUB_CONFIG.apiUrl}/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repository}/contents/${filename}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`GitHub API Error: ${errorData.message}`);
+            }
+            
+            return await response.json();
+        }
+
+        // Load data dari GitHub
+        async function loadFromGitHub(filename) {
+            if (!githubConnected && !await checkGitHubConnection()) {
+                return null;
+            }
+            
+            try {
+                const response = await fetch(`${GITHUB_CONFIG.apiUrl}/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repository}/contents/${filename}`, {
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const fileData = await response.json();
+                    const content = atob(fileData.content);
+                    return JSON.parse(content);
+                } else if (response.status === 404) {
+                    // File belum ada
+                    return null;
+                } else {
+                    throw new Error(`GitHub API Error: ${response.status}`);
+                }
+            } catch (error) {
+                console.error(`Error loading ${filename} from GitHub:`, error);
+                return null;
+            }
+        }
+
+        // Cek koneksi GitHub
+        async function checkGitHubConnection() {
+            try {
+                const response = await fetch(`${GITHUB_CONFIG.apiUrl}/user`, {
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                githubConnected = response.ok;
+                return githubConnected;
+            } catch (error) {
+                githubConnected = false;
+                return false;
+            }
+        }
+
+        // Monitor koneksi internet dan GitHub
+        function updateConnectionStatus() {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const connectionStatus = document.getElementById('connectionStatus');
+            
+            if (navigator.onLine) {
+                if (githubConnected) {
+                    statusIndicator.className = 'w-2 h-2 sm:w-3 sm:h-3 rounded-full mr-2 bg-green-500';
+                    statusText.textContent = '🌐 GitHub Connected';
+                    connectionStatus.className = 'flex items-center px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-medium bg-green-100 text-green-800';
+                } else {
+                    statusIndicator.className = 'w-2 h-2 sm:w-3 sm:h-3 rounded-full mr-2 bg-yellow-500';
+                    statusText.textContent = '🌐 Online (Local)';
+                    connectionStatus.className = 'flex items-center px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-medium bg-yellow-100 text-yellow-800';
+                }
+                isOnline = true;
+                
+                // Auto sync saat online
+                if (!syncInProgress) {
+                    syncDataToGitHub();
+                }
+            } else {
+                statusIndicator.className = 'w-2 h-2 sm:w-3 sm:h-3 rounded-full mr-2 bg-red-500';
+                statusText.textContent = '📱 Offline';
+                connectionStatus.className = 'flex items-center px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-medium bg-red-100 text-red-800';
+                isOnline = false;
+            }
+        }
+
+        // Event listeners untuk perubahan koneksi
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        
+        // Cek koneksi saat load
+        updateConnectionStatus();
+
+        // Sync data ke GitHub
+        async function syncDataToGitHub() {
+            if (!isOnline || syncInProgress) return;
+            
+            syncInProgress = true;
+            
+            try {
+                // Update status
+                document.getElementById('statusText').textContent = '🔄 Syncing to GitHub...';
+                
+                // Sync data siswa
+                await saveToGitHub('data-siswa.json', dataSiswa, 'Update data siswa');
+                
+                // Sync data absensi
+                await saveToGitHub('data-absensi.json', dataAbsensi, 'Update data absensi');
+                
+                // Update status sukses
+                setTimeout(() => {
+                    updateConnectionStatus();
+                }, 2000);
+                
+                console.log('✅ Data berhasil disinkronkan ke GitHub');
+                
+            } catch (error) {
+                console.error('GitHub sync error:', error);
+                showNotification('⚠️ Gagal sync ke GitHub. Data tersimpan lokal.', 'error');
+                
+                // Fallback ke localStorage
+                localStorage.setItem('dataSiswa', JSON.stringify(dataSiswa));
+                localStorage.setItem('dataAbsensi', JSON.stringify(dataAbsensi));
+            } finally {
+                syncInProgress = false;
+            }
+        }
+
+        // Load data dari GitHub saat startup
+        async function loadDataFromGitHub() {
+            if (!isOnline) {
+                loadDataFromLocalStorage();
+                return;
+            }
+            
+            try {
+                // Cek koneksi GitHub
+                await checkGitHubConnection();
+                
+                if (githubConnected) {
+                    // Load data siswa dari GitHub
+                    const githubSiswa = await loadFromGitHub('data-siswa.json');
+                    if (githubSiswa) {
+                        dataSiswa = { ...dataSiswa, ...githubSiswa };
+                    }
+                    
+                    // Load data absensi dari GitHub
+                    const githubAbsensi = await loadFromGitHub('data-absensi.json');
+                    if (githubAbsensi) {
+                        dataAbsensi = githubAbsensi;
+                    }
+                    
+                    console.log('✅ Data berhasil dimuat dari GitHub');
+                }
+                
+                // Backup ke localStorage
+                localStorage.setItem('dataSiswa', JSON.stringify(dataSiswa));
+                localStorage.setItem('dataAbsensi', JSON.stringify(dataAbsensi));
+                
+            } catch (error) {
+                console.error('Failed to load from GitHub:', error);
+                loadDataFromLocalStorage();
+            }
+        }
+
+        // Load data dari localStorage (fallback)
+        function loadDataFromLocalStorage() {
+            const savedStudents = localStorage.getItem('dataSiswa');
+            const savedAbsensi = localStorage.getItem('dataAbsensi');
+            
+            if (savedStudents) {
+                try {
+                    const parsedData = JSON.parse(savedStudents);
+                    Object.keys(parsedData).forEach(kelas => {
+                        if (dataSiswa[kelas] !== undefined) {
+                            dataSiswa[kelas] = parsedData[kelas] || [];
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error loading saved student data:', error);
+                }
+            }
+            
+            if (savedAbsensi) {
+                try {
+                    dataAbsensi = JSON.parse(savedAbsensi) || [];
+                } catch (error) {
+                    console.error('Error loading saved absensi data:', error);
+                }
+            }
+        }
+
+        // Auto sync setiap 5 menit jika online
+        setInterval(() => {
+            if (isOnline && !syncInProgress) {
+                syncDataToGitHub();
+            }
+        }, 5 * 60 * 1000); // 5 menit
+
+        // ========================================
+        // FUNGSI TAB SWITCHING
+        // ========================================
+        
+        function switchTab(tabName) {
+            const manualTab = document.getElementById('manualTab');
+            const uploadTab = document.getElementById('uploadTab');
+            const manualInputTab = document.getElementById('manualInputTab');
+            const uploadFileTab = document.getElementById('uploadFileTab');
+            
+            if (tabName === 'manual') {
+                manualTab.className = 'px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600 bg-blue-50 rounded-t-lg';
+                uploadTab.className = 'px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 ml-2';
+                manualInputTab.classList.remove('hidden');
+                uploadFileTab.classList.add('hidden');
+                updateStudentList();
+            } else {
+                uploadTab.className = 'px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600 bg-blue-50 rounded-t-lg ml-2';
+                manualTab.className = 'px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700';
+                uploadFileTab.classList.remove('hidden');
+                manualInputTab.classList.add('hidden');
+            }
+        }
+
+        // ========================================
+        // FUNGSI INPUT MODE SWITCHING
+        // ========================================
+        
+        function switchInputMode(mode) {
+            const singleModeBtn = document.getElementById('singleModeBtn');
+            const bulkModeBtn = document.getElementById('bulkModeBtn');
+            const singleInputMode = document.getElementById('singleInputMode');
+            const bulkInputMode = document.getElementById('bulkInputMode');
+            
+            if (mode === 'single') {
+                singleModeBtn.className = 'flex-1 px-4 py-2 text-sm font-medium bg-white text-green-600 rounded-md shadow-sm';
+                bulkModeBtn.className = 'flex-1 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800';
+                singleInputMode.classList.remove('hidden');
+                bulkInputMode.classList.add('hidden');
+            } else {
+                bulkModeBtn.className = 'flex-1 px-4 py-2 text-sm font-medium bg-white text-blue-600 rounded-md shadow-sm';
+                singleModeBtn.className = 'flex-1 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800';
+                bulkInputMode.classList.remove('hidden');
+                singleInputMode.classList.add('hidden');
+            }
+        }
+
+        // ========================================
+        // FUNGSI INPUT MANUAL SISWA
+        // ========================================
+
+        // Handle manual student form (single)
+        document.getElementById('manualStudentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const kelas = document.getElementById('manualKelas').value;
+            const nama = document.getElementById('manualNama').value.trim();
+            
+            if (!kelas || !nama) {
+                showNotification('❌ Pilih kelas dan isi nama siswa!', 'error');
+                return;
+            }
+            
+            // Cek duplikasi nama dalam kelas yang sama
+            if (dataSiswa[kelas] && dataSiswa[kelas].includes(nama)) {
+                showNotification('❌ Nama siswa sudah ada di kelas ini!', 'error');
+                return;
+            }
+            
+            // Tambah siswa ke data
+            if (!dataSiswa[kelas]) {
+                dataSiswa[kelas] = [];
+            }
+            dataSiswa[kelas].push(nama);
+            
+            // Simpan ke localStorage
+            localStorage.setItem('dataSiswa', JSON.stringify(dataSiswa));
+            
+            // Sync ke GitHub jika terhubung
+            if (githubConnected) {
+                try {
+                    await saveToGitHub('data-siswa.json', dataSiswa, `Tambah siswa: ${nama} ke kelas ${kelas}`);
+                } catch (error) {
+                    console.error('Failed to sync to GitHub:', error);
+                }
+            }
+            
+            // Reset form
+            document.getElementById('manualNama').value = '';
+            document.getElementById('manualKelas').focus();
+            
+            // Update tampilan
+            updateStudentList();
+            
+            showNotification(`✅ ${nama} berhasil ditambahkan ke kelas ${kelas}!`, 'success');
+        });
+
+        // Handle bulk student form
+        document.getElementById('bulkStudentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const kelas = document.getElementById('bulkKelas').value;
+            const namaText = document.getElementById('bulkNama').value.trim();
+            
+            if (!kelas || !namaText) {
+                showNotification('❌ Pilih kelas dan isi daftar nama siswa!', 'error');
+                return;
+            }
+            
+            const bulkSubmitText = document.getElementById('bulkSubmitText');
+            const bulkSubmitLoading = document.getElementById('bulkSubmitLoading');
+            
+            // Show loading
+            bulkSubmitText.textContent = 'Menambahkan...';
+            bulkSubmitLoading.classList.remove('hidden');
+            
+            // Parse nama-nama
+            const namaList = namaText.split('\n')
+                .map(nama => nama.trim())
+                .filter(nama => nama.length > 0);
+            
+            let addedCount = 0;
+            let duplicateCount = 0;
+            
+            // Inisialisasi array kelas jika belum ada
+            if (!dataSiswa[kelas]) {
+                dataSiswa[kelas] = [];
+            }
+            
+            // Tambahkan setiap nama
+            namaList.forEach(nama => {
+                if (!dataSiswa[kelas].includes(nama)) {
+                    dataSiswa[kelas].push(nama);
+                    addedCount++;
+                } else {
+                    duplicateCount++;
+                }
+            });
+            
+            // Simpan ke localStorage
+            localStorage.setItem('dataSiswa', JSON.stringify(dataSiswa));
+            
+            // Sync ke GitHub jika terhubung
+            if (githubConnected) {
+                try {
+                    await saveToGitHub('data-siswa.json', dataSiswa, `Bulk add ${addedCount} siswa ke kelas ${kelas}`);
+                } catch (error) {
+                    console.error('Failed to sync to GitHub:', error);
+                }
+            }
+            
+            // Reset form
+            document.getElementById('bulkNama').value = '';
+            document.getElementById('bulkKelas').value = '';
+            document.getElementById('nameCount').textContent = '0';
+            
+            // Update tampilan
+            updateStudentList();
+            
+            // Reset button
+            bulkSubmitText.textContent = '📝 Tambah Semua Siswa';
+            bulkSubmitLoading.classList.add('hidden');
+            
+            // Show result
+            let message = `✅ Berhasil menambahkan ${addedCount} siswa ke kelas ${kelas}!`;
+            if (duplicateCount > 0) {
+                message += ` (${duplicateCount} nama sudah ada)`;
+            }
+            showNotification(message, 'success');
+        });
+
+        // Count names in bulk textarea
+        document.getElementById('bulkNama').addEventListener('input', function() {
+            const text = this.value.trim();
+            const count = text ? text.split('\n').filter(line => line.trim().length > 0).length : 0;
+            document.getElementById('nameCount').textContent = count;
+        });
+        
+        // Update student list display
+        function updateStudentList() {
+            const container = document.getElementById('studentListContainer');
+            
+            let html = '';
+            const kelasKeys = Object.keys(dataSiswa).sort();
+            
+            kelasKeys.forEach(kelas => {
+                if (dataSiswa[kelas] && dataSiswa[kelas].length > 0) {
+                    html += `
+                        <div class="mb-4 border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-semibold text-gray-800">Kelas ${kelas} (${dataSiswa[kelas].length} siswa)</h4>
+                                <button onclick="clearClass('${kelas}')" class="text-red-600 hover:text-red-800 text-sm">
+                                    🗑️ Hapus Semua
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                ${dataSiswa[kelas].map((nama, index) => `
+                                    <div class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded text-sm">
+                                        <span>${index + 1}. ${nama}</span>
+                                        <button onclick="removeStudent('${kelas}', ${index})" class="text-red-500 hover:text-red-700 ml-2">
+                                            ❌
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            if (html === '') {
+                html = `
+                    <div class="text-center text-gray-500 py-8">
+                        <p class="text-base">📝 Belum ada data siswa</p>
+                        <p class="text-sm mt-2">Mulai tambahkan siswa dengan form di atas</p>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // Remove single student
+        async function removeStudent(kelas, index) {
+            const nama = dataSiswa[kelas][index];
+            dataSiswa[kelas].splice(index, 1);
+            
+            // Hapus kelas jika kosong
+            if (dataSiswa[kelas].length === 0) {
+                dataSiswa[kelas] = [];
+            }
+            
+            // Simpan ke localStorage
+            localStorage.setItem('dataSiswa', JSON.stringify(dataSiswa));
+            
+            // Sync ke GitHub jika terhubung
+            if (githubConnected) {
+                try {
+                    await saveToGitHub('data-siswa.json', dataSiswa, `Hapus siswa: ${nama} dari kelas ${kelas}`);
+                } catch (error) {
+                    console.error('Failed to sync to GitHub:', error);
+                }
+            }
+            
+            // Update tampilan
+            updateStudentList();
+            
+            showNotification(`✅ ${nama} berhasil dihapus!`, 'success');
+        }
+        
+        // Clear entire class
+        async function clearClass(kelas) {
+            const jumlah = dataSiswa[kelas].length;
+            dataSiswa[kelas] = [];
+            
+            // Simpan ke localStorage
+            localStorage.setItem('dataSiswa', JSON.stringify(dataSiswa));
+            
+            // Sync ke GitHub jika terhubung
+            if (githubConnected) {
+                try {
+                    await saveToGitHub('data-siswa.json', dataSiswa, `Hapus semua siswa kelas ${kelas}`);
+                } catch (error) {
+                    console.error('Failed to sync to GitHub:', error);
+                }
+            }
+            
+            // Update tampilan
+            updateStudentList();
+            
+            showNotification(`✅ Semua siswa kelas ${kelas} (${jumlah} siswa) berhasil dihapus!`, 'success');
+        }
+
+        // Handle perubahan kelas
+        document.getElementById('kelas').addEventListener('change', function() {
+            const kelas = this.value;
+            const namaSiswaSelect = document.getElementById('namaSiswa');
+            
+            // Reset dan disable jika tidak ada kelas dipilih
+            if (!kelas) {
+                namaSiswaSelect.innerHTML = '<option value="">-- Pilih kelas terlebih dahulu --</option>';
+                namaSiswaSelect.disabled = true;
+                return;
+            }
+
+            // Enable dan populate nama siswa
+            namaSiswaSelect.disabled = false;
+            namaSiswaSelect.innerHTML = '<option value="">-- Pilih Nama Siswa --</option>';
+            
+            if (dataSiswa[kelas] && dataSiswa[kelas].length > 0) {
+                dataSiswa[kelas].forEach(nama => {
+                    const option = document.createElement('option');
+                    option.value = nama;
+                    option.textContent = nama;
+                    namaSiswaSelect.appendChild(option);
+                });
+            } else {
+                namaSiswaSelect.innerHTML = '<option value="">-- Belum ada siswa di kelas ini --</option>';
+            }
+        });
+
+        // Handle submit form
+        document.getElementById('absensiForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitLoading = document.getElementById('submitLoading');
+            
+            // Disable button dan show loading
+            submitBtn.disabled = true;
+            submitText.textContent = 'Mencatat...';
+            submitLoading.classList.remove('hidden');
+
+            // Ambil data form
+            const formData = new FormData(this);
+            const now = new Date();
+            
+            const absensiData = {
+                id: Date.now(), // Unique ID
+                tanggal: now.toLocaleDateString('id-ID'),
+                waktu: now.toLocaleTimeString('id-ID'),
+                kelas: formData.get('kelas'),
+                nama: formData.get('namaSiswa'),
+                status: formData.get('status'),
+                keterangan: formData.get('keterangan') || '-'
+            };
+
+            // Simpan data (online/offline)
+            setTimeout(async () => {
+                try {
+                    // Tambah ke data lokal
+                    dataAbsensi.push(absensiData);
+                    
+                    // Simpan ke localStorage
+                    localStorage.setItem('dataAbsensi', JSON.stringify(dataAbsensi));
+                    
+                    // Sync ke GitHub jika terhubung
+                    if (githubConnected) {
+                        await saveToGitHub('data-absensi.json', dataAbsensi, `Catat keterlambatan: ${absensiData.nama} - ${absensiData.status}`);
+                        showNotification('✅ Keterlambatan berhasil dicatat dan disinkronkan ke GitHub!', 'success');
+                    } else {
+                        showNotification('✅ Keterlambatan dicatat (akan disinkronkan saat GitHub terhubung)', 'success');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error saving absensi:', error);
+                    showNotification('✅ Keterlambatan dicatat (tersimpan lokal)', 'success');
+                }
+                
+                // Reset form
+                this.reset();
+                document.getElementById('namaSiswa').disabled = true;
+                document.getElementById('namaSiswa').innerHTML = '<option value="">-- Pilih kelas terlebih dahulu --</option>';
+                
+                // Reset button
+                submitBtn.disabled = false;
+                submitText.textContent = '💾 Catat Keterlambatan';
+                submitLoading.classList.add('hidden');
+                
+                // Update rekap
+                updateRekap();
+                
+            }, 1500);
+        });
+
+        // Update rekap harian
+        function updateRekap() {
+            const today = new Date().toLocaleDateString('id-ID');
+            const todayData = dataAbsensi.filter(item => item.tanggal === today);
+            
+            const rekapContainer = document.getElementById('rekapContainer');
+            
+            if (todayData.length === 0) {
+                rekapContainer.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <p class="text-base sm:text-lg">📝 Belum ada data keterlambatan hari ini</p>
+                        <p class="text-sm mt-2">Mulai catat keterlambatan untuk melihat rekap</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Hitung statistik
+            const stats = {
+                macet: todayData.filter(item => item.status === 'Macet').length,
+                kesiangan: todayData.filter(item => item.status === 'Kesiangan').length,
+                kendaraan: todayData.filter(item => item.status === 'Kendaraan Rusak').length,
+                keluarga: todayData.filter(item => item.status === 'Keperluan Keluarga').length,
+                lainnya: todayData.filter(item => item.status === 'Lainnya').length
+            };
+
+            const total = stats.macet + stats.kesiangan + stats.kendaraan + stats.keluarga + stats.lainnya;
+
+            // Responsive grid untuk statistik
+            const isMobile = window.innerWidth < 640;
+            const gridCols = isMobile ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5';
+
+            rekapContainer.innerHTML = `
+                <!-- Statistik -->
+                <div class="${gridCols} gap-2 sm:gap-4 mb-4 sm:mb-6">
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-2 sm:p-4 text-center">
+                        <div class="text-lg sm:text-2xl font-bold text-orange-600">${stats.macet}</div>
+                        <div class="text-xs sm:text-sm text-orange-700">🚗 Macet</div>
+                    </div>
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-2 sm:p-4 text-center">
+                        <div class="text-lg sm:text-2xl font-bold text-red-600">${stats.kesiangan}</div>
+                        <div class="text-xs sm:text-sm text-red-700">😴 Kesiangan</div>
+                    </div>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-2 sm:p-4 text-center">
+                        <div class="text-lg sm:text-2xl font-bold text-yellow-600">${stats.kendaraan}</div>
+                        <div class="text-xs sm:text-sm text-yellow-700">🔧 Kendaraan</div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-4 text-center">
+                        <div class="text-lg sm:text-2xl font-bold text-blue-600">${stats.keluarga}</div>
+                        <div class="text-xs sm:text-sm text-blue-700">👨‍👩‍👧‍👦 Keluarga</div>
+                    </div>
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-2 sm:p-4 text-center ${isMobile ? 'col-span-2' : 'lg:col-span-1'}">
+                        <div class="text-lg sm:text-2xl font-bold text-purple-600">${stats.lainnya}</div>
+                        <div class="text-xs sm:text-sm text-purple-700">📝 Lainnya</div>
+                    </div>
+                </div>
+
+                <!-- Total -->
+                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-center">
+                    <div class="text-2xl sm:text-3xl font-bold text-indigo-600">${total}</div>
+                    <div class="text-sm sm:text-base text-indigo-700">Total Siswa Terlambat Hari Ini</div>
+                </div>
+
+                <!-- Tombol Ekspor -->
+                <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-2 sm:gap-4">
+                    <button onclick="exportToExcel()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center text-sm sm:text-base">
+                        📊 Ekspor ke Excel
+                    </button>
+                    <button onclick="exportStudentList()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center text-sm sm:text-base">
+                        👥 Ekspor Daftar Siswa
+                    </button>
+                </div>
+
+                <!-- Detail List - Mobile Cards / Desktop Table -->
+                ${isMobile ? generateMobileCards(todayData) : generateDesktopTable(todayData)}
+            `;
+        }
+
+        // Generate mobile cards
+        function generateMobileCards(data) {
+            return `
+                <div class="space-y-3">
+                    ${data.map(item => `
+                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="font-medium text-gray-800">${item.nama}</div>
+                                <div class="text-xs text-gray-500">${item.waktu}</div>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="text-sm font-medium text-gray-600">Kelas ${item.kelas}</div>
+                                <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(item.status)}">
+                                    ${getStatusIcon(item.status)} ${item.status}
+                                </span>
+                            </div>
+                            <div class="text-xs text-gray-600">${item.keterangan}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Generate desktop table
+        function generateDesktopTable(data) {
+            return `
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse border border-gray-300 rounded-lg">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-700">Waktu</th>
+                                <th class="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-700">Kelas</th>
+                                <th class="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-700">Nama Siswa</th>
+                                <th class="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-700">Alasan</th>
+                                <th class="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-700">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map(item => `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="border border-gray-300 px-4 py-3 text-sm">${item.waktu}</td>
+                                    <td class="border border-gray-300 px-4 py-3 text-sm font-medium">${item.kelas}</td>
+                                    <td class="border border-gray-300 px-4 py-3 text-sm">${item.nama}</td>
+                                    <td class="border border-gray-300 px-4 py-3 text-sm">
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(item.status)}">
+                                            ${getStatusIcon(item.status)} ${item.status}
+                                        </span>
+                                    </td>
+                                    <td class="border border-gray-300 px-4 py-3 text-sm text-gray-600">${item.keterangan}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Helper functions
+        function getStatusClass(status) {
+            const classes = {
+                'Macet': 'bg-orange-100 text-orange-800',
+                'Kesiangan': 'bg-red-100 text-red-800',
+                'Kendaraan Rusak': 'bg-yellow-100 text-yellow-800',
+                'Keperluan Keluarga': 'bg-blue-100 text-blue-800',
+                'Lainnya': 'bg-purple-100 text-purple-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getStatusIcon(status) {
+            const icons = {
+                'Macet': '🚗',
+                'Kesiangan': '😴',
+                'Kendaraan Rusak': '🔧',
+                'Keperluan Keluarga': '👨‍👩‍👧‍👦',
+                'Lainnya': '📝'
+            };
+            return icons[status] || '❓';
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 max-w-xs text-sm ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Handle logo upload
+        document.getElementById('logoUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const logoImg = document.getElementById('schoolLogo');
+                    const placeholder = document.getElementById('logoPlaceholder');
+                    
+                    logoImg.src = e.target.result;
+                    logoImg.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    
+                    // Simpan logo ke localStorage
+                    localStorage.setItem('schoolLogo', e.target.result);
+                    
+                    showNotification('✅ Logo berhasil diupload!', 'success');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Load logo dari localStorage saat halaman dimuat
+        function loadSavedLogo() {
+            const savedLogo = localStorage.getItem('schoolLogo');
+            if (savedLogo) {
+                const logoImg = document.getElementById('schoolLogo');
+                const placeholder = document.getElementById('logoPlaceholder');
+                
+                logoImg.src = savedLogo;
+                logoImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            }
+        }
+
+        // Update rekap saat resize untuk responsive layout
+        window.addEventListener('resize', () => {
+            if (dataAbsensi.length > 0) {
+                updateRekap();
+            }
+        });
+
+        // ========================================
+        // FUNGSI IMPORT & EKSPOR DATA SISWA
+        // ========================================
+        
+        // Fungsi untuk download template Excel
+        function downloadTemplate() {
+            const csvContent = `7-1,Ahmad Rizki Maulana
+7-1,Siti Nurhaliza Putri
+7-1,Budi Santoso
+7-2,Cut Nyak Dien
+7-2,Dinda Permata
+8-1,Agus Salim
+8-1,Bintang Timur
+9-1,Atta Halilintar
+9-1,Billar Pradana`;
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "Template_Data_Siswa_SMPN5.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('✅ Template berhasil didownload!', 'success');
+        }
+
+        // Fungsi untuk import data siswa dari file Excel/CSV
+        function importStudentData() {
+            const fileInput = document.getElementById('fileImport');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showNotification('❌ Pilih file terlebih dahulu!', 'error');
+                return;
+            }
+
+            const importBtn = document.getElementById('importBtn');
+            const importText = document.getElementById('importText');
+            const importLoading = document.getElementById('importLoading');
+            
+            // Show loading
+            importBtn.disabled = true;
+            importText.textContent = 'Mengimpor...';
+            importLoading.classList.remove('hidden');
+
+            const fileName = file.name.toLowerCase();
+            const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+            const isCSV = fileName.endsWith('.csv');
+            
+            if (!isExcel && !isCSV) {
+                showNotification('❌ Format file tidak didukung! Gunakan .xlsx, .xls, atau .csv', 'error');
+                resetImportButton();
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            if (isCSV) {
+                // Handle CSV files
+                reader.onload = function(e) {
+                    try {
+                        processCSVData(e.target.result);
+                    } catch (error) {
+                        console.error('Error parsing CSV:', error);
+                        showNotification('❌ Error membaca file CSV! Pastikan format benar.', 'error');
+                        resetImportButton();
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            } else {
+                // Handle Excel files (.xlsx/.xls)
+                reader.onload = function(e) {
+                    try {
+                        processExcelData(e.target.result);
+                    } catch (error) {
+                        console.error('Error parsing Excel:', error);
+                        showNotification('❌ Error membaca file Excel! Pastikan format benar.', 'error');
+                        resetImportButton();
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+            
+            reader.onerror = function() {
+                showNotification('❌ Error membaca file!', 'error');
+                resetImportButton();
+            };
+        }
+
+        // Process CSV data
+        function processCSVData(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim() !== '');
+            let importedCount = 0;
+            let errorCount = 0;
+            let skippedCount = 0;
+            
+            lines.forEach((line, index) => {
+                // Handle different CSV formats and encodings
+                let columns = [];
+                
+                // Try comma first
+                if (line.includes(',')) {
+                    columns = parseCSVLine(line);
+                } else if (line.includes(';')) {
+                    columns = line.split(';').map(col => col.trim().replace(/"/g, ''));
+                } else if (line.includes('\t')) {
+                    columns = line.split('\t').map(col => col.trim().replace(/"/g, ''));
+                } else {
+                    // Try space separation as last resort
+                    const parts = line.trim().split(/\s+/);
+                    if (parts.length >= 2) {
+                        columns = [parts[0], parts.slice(1).join(' ')];
+                    }
+                }
+                
+                if (columns.length >= 2) {
+                    const kelas = columns[0].trim().replace(/"/g, '').replace(/'/g, '');
+                    const nama = columns[1].trim().replace(/"/g, '').replace(/'/g, '');
+                    
+                    const result = addStudentToClass(kelas, nama, index + 1);
+                    if (result === 'added') {
+                        importedCount++;
+                    } else if (result === 'duplicate') {
+                        skippedCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } else {
+                    errorCount++;
+                }
+            });
+            
+            finishImport(importedCount, errorCount, skippedCount);
+        }
+
+        // Process Excel data using basic parsing
+        function processExcelData(arrayBuffer) {
+            // Simple Excel parsing without external libraries
+            // This is a basic implementation that works with simple .xlsx files
+            
+            try {
+                // Convert ArrayBuffer to text for basic parsing
+                const uint8Array = new Uint8Array(arrayBuffer);
+                let text = '';
+                
+                // Try to extract text content from Excel file
+                // This is a simplified approach that may work with basic Excel files
+                for (let i = 0; i < uint8Array.length; i++) {
+                    const char = uint8Array[i];
+                    if (char >= 32 && char <= 126) { // Printable ASCII
+                        text += String.fromCharCode(char);
+                    } else if (char === 9 || char === 10 || char === 13) { // Tab, LF, CR
+                        text += String.fromCharCode(char);
+                    }
+                }
+                
+                // Extract potential data patterns
+                const lines = text.split(/[\r\n]+/).filter(line => line.trim() !== '');
+                let importedCount = 0;
+                let errorCount = 0;
+                let skippedCount = 0;
+                
+                // Look for patterns that match class-name format
+                const classPattern = /([789]-[1-4])\s*[^\w]*([A-Za-z\s]+)/g;
+                
+                lines.forEach((line, index) => {
+                    let match;
+                    while ((match = classPattern.exec(line)) !== null) {
+                        const kelas = match[1].trim();
+                        const nama = match[2].trim().replace(/[^\w\s]/g, '').trim();
+                        
+                        if (nama.length > 2) { // Valid name should be longer than 2 chars
+                            const result = addStudentToClass(kelas, nama, index + 1);
+                            if (result === 'added') {
+                                importedCount++;
+                            } else if (result === 'duplicate') {
+                                skippedCount++;
+                            }
+                        }
+                    }
+                });
+                
+                if (importedCount === 0) {
+                    // Fallback: try to parse as CSV-like content
+                    showNotification('⚠️ Format Excel kompleks terdeteksi. Coba simpan sebagai CSV terlebih dahulu.', 'error');
+                    resetImportButton();
+                    return;
+                }
+                
+                finishImport(importedCount, errorCount, skippedCount);
+                
+            } catch (error) {
+                console.error('Excel parsing error:', error);
+                showNotification('❌ File Excel tidak dapat dibaca. Coba simpan sebagai CSV (.csv) terlebih dahulu.', 'error');
+                resetImportButton();
+            }
+        }
+
+        // Parse CSV line handling quoted fields
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current.trim());
+            return result;
+        }
+
+        // Add student to class with validation
+        function addStudentToClass(kelas, nama, lineNumber) {
+            const validKelas = ['7-1', '7-2', '7-3', '8-1', '8-2', '8-3', '8-4', '9-1', '9-2'];
+            
+            if (!validKelas.includes(kelas)) {
+                console.log(`Line ${lineNumber}: Invalid class "${kelas}"`);
+                return 'error';
+            }
+            
+            if (!nama || nama.length < 2) {
+                console.log(`Line ${lineNumber}: Invalid name "${nama}"`);
+                return 'error';
+            }
+            
+            if (!dataSiswa[kelas]) {
+                dataSiswa[kelas] = [];
+            }
+            
+            if (dataSiswa[kelas].includes(nama)) {
+                return 'duplicate';
+            }
+            
+            dataSiswa[kelas].push(nama);
+            return 'added';
+        }
+
+        // Finish import process
+        async function finishImport(importedCount, errorCount, skippedCount) {
+            if (importedCount > 0) {
+                // Simpan ke localStorage
+                localStorage.setItem('dataSiswa', JSON.stringify(dataSiswa));
+                
+                // Sync ke GitHub jika terhubung
+                if (githubConnected) {
+                    try {
+                        await saveToGitHub('data-siswa.json', dataSiswa, `Import ${importedCount} siswa dari file`);
+                    } catch (error) {
+                        console.error('Failed to sync to GitHub:', error);
+                    }
+                }
+                
+                // Update tampilan
+                updateStudentList();
+                
+                let message = `✅ Berhasil import ${importedCount} siswa!`;
+                if (skippedCount > 0) {
+                    message += ` (${skippedCount} duplikat dilewati)`;
+                }
+                if (errorCount > 0) {
+                    message += ` (${errorCount} data error)`;
+                }
+                showNotification(message, 'success');
+            } else {
+                showNotification('❌ Tidak ada data valid yang diimport! Periksa format file.', 'error');
+            }
+            
+            resetImportButton();
+        }
+
+        // Reset import button state
+        function resetImportButton() {
+            const importBtn = document.getElementById('importBtn');
+            const importText = document.getElementById('importText');
+            const importLoading = document.getElementById('importLoading');
+            const fileInput = document.getElementById('fileImport');
+            
+            importBtn.disabled = false;
+            importText.textContent = '📥 Import Data';
+            importLoading.classList.add('hidden');
+            fileInput.value = '';
+        }
+
+        // ========================================
+        // FUNGSI EKSPOR KE EXCEL
+        // ========================================
+        
+        // Fungsi untuk ekspor data keterlambatan ke Excel
+        function exportToExcel() {
+            const today = new Date().toLocaleDateString('id-ID');
+            const todayData = dataAbsensi.filter(item => item.tanggal === today);
+            
+            if (todayData.length === 0) {
+                showNotification('❌ Tidak ada data untuk diekspor!', 'error');
+                return;
+            }
+
+            // Buat CSV content
+            let csvContent = "LAPORAN KETERLAMBATAN SISWA\n";
+            csvContent += "SMP NEGERI 5 BANDA ACEH\n";
+            csvContent += `Tanggal: ${today}\n\n`;
+            csvContent += "No,Waktu,Kelas,Nama Siswa,Alasan Keterlambatan,Keterangan\n";
+            
+            // Data rows
+            todayData.forEach((item, index) => {
+                csvContent += `${index + 1},"${item.waktu}","${item.kelas}","${item.nama}","${item.status}","${item.keterangan}"\n`;
+            });
+            
+            // Statistik
+            const stats = {
+                macet: todayData.filter(item => item.status === 'Macet').length,
+                kesiangan: todayData.filter(item => item.status === 'Kesiangan').length,
+                kendaraan: todayData.filter(item => item.status === 'Kendaraan Rusak').length,
+                keluarga: todayData.filter(item => item.status === 'Keperluan Keluarga').length,
+                lainnya: todayData.filter(item => item.status === 'Lainnya').length
+            };
+            
+            csvContent += "\n\nRINGKASAN STATISTIK\n";
+            csvContent += "Alasan,Jumlah\n";
+            csvContent += `"Macet",${stats.macet}\n`;
+            csvContent += `"Kesiangan",${stats.kesiangan}\n`;
+            csvContent += `"Kendaraan Rusak",${stats.kendaraan}\n`;
+            csvContent += `"Keperluan Keluarga",${stats.keluarga}\n`;
+            csvContent += `"Lainnya",${stats.lainnya}\n`;
+            csvContent += `"TOTAL",${todayData.length}\n`;
+
+            // Download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Laporan_Keterlambatan_${today.replace(/\//g, '-')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('✅ Data berhasil diekspor ke Excel!', 'success');
+        }
+
+        // Fungsi untuk ekspor daftar siswa per kelas
+        function exportStudentList() {
+            // Buat CSV content untuk daftar siswa
+            let csvContent = "DAFTAR SISWA SMP NEGERI 5 BANDA ACEH\n";
+            csvContent += `Diekspor pada: ${new Date().toLocaleDateString('id-ID')}\n\n`;
+            csvContent += "Kelas,No,Nama Siswa\n";
+            
+            // Data siswa per kelas
+            Object.keys(dataSiswa).sort().forEach(kelas => {
+                if (dataSiswa[kelas] && dataSiswa[kelas].length > 0) {
+                    dataSiswa[kelas].forEach((nama, index) => {
+                        csvContent += `"${kelas}",${index + 1},"${nama}"\n`;
+                    });
+                }
+            });
+            
+            // Ringkasan
+            csvContent += "\n\nRINGKASAN JUMLAH SISWA PER KELAS\n";
+            csvContent += "Kelas,Jumlah Siswa\n";
+            Object.keys(dataSiswa).sort().forEach(kelas => {
+                const jumlah = dataSiswa[kelas] ? dataSiswa[kelas].length : 0;
+                csvContent += `"${kelas}",${jumlah}\n`;
+            });
+            
+            const totalSiswa = Object.values(dataSiswa).reduce((total, siswa) => total + (siswa ? siswa.length : 0), 0);
+            csvContent += `"TOTAL KESELURUHAN",${totalSiswa}\n`;
+
+            // Download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Daftar_Siswa_SMPN5_BandaAceh.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('✅ Daftar siswa berhasil diekspor!', 'success');
+        }
+
+        // Hide setup card function
+        function hideSetupCard() {
+            document.getElementById('onlineSetupCard').style.display = 'none';
+            localStorage.setItem('hideOnlineSetup', 'true');
+            showNotification('✅ Card setup disembunyikan. Refresh halaman jika perlu melihat lagi.', 'success');
+        }
+
+        // Check if setup card should be hidden
+        function checkSetupCardVisibility() {
+            const hideSetup = localStorage.getItem('hideOnlineSetup');
+            if (hideSetup === 'true') {
+                document.getElementById('onlineSetupCard').style.display = 'none';
+            }
+        }
+
+        // Initialize application
+        async function initializeApp() {
+            // Check setup card visibility
+            checkSetupCardVisibility();
+            
+            // Load data (GitHub first, fallback to local)
+            await loadDataFromGitHub();
+            
+            // Update displays
+            updateRekap();
+            updateStudentList();
+            loadSavedLogo();
+            
+            // Check GitHub connection
+            await checkGitHubConnection();
+            updateConnectionStatus();
+            
+            console.log('✅ Aplikasi berhasil diinisialisasi dengan GitHub integration');
+        }
+
+        // Load initial data dan setup
+        initializeApp();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'993ea691b4ae45e2',t:'MTc2MTM2MzE4Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
